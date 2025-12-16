@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { FavoriteIcon } from "@/components/ui/icons";
 
 interface MatchNotificationProps {
   matchName: string;
@@ -37,7 +38,7 @@ export function MatchNotification({
             <div className="flex flex-col items-center gap-6 rounded-[22px] bg-background p-8 text-center">
               {/* Hearts animation */}
               <div className="relative">
-                <motion.span
+                <motion.div
                   animate={{
                     scale: [1, 1.2, 1],
                   }}
@@ -46,10 +47,9 @@ export function MatchNotification({
                     repeat: Infinity,
                     repeatType: "loop",
                   }}
-                  className="text-7xl"
                 >
-                  💕
-                </motion.span>
+                  <FavoriteIcon size="large" className="text-rose-gold" />
+                </motion.div>
               </div>
 
               {/* Title */}
@@ -64,7 +64,7 @@ export function MatchNotification({
 
               {/* Subtext */}
               <p className="text-sm text-muted-foreground">
-                Your wedding visions align ✨
+                Your wedding visions align
               </p>
 
               {/* Actions */}

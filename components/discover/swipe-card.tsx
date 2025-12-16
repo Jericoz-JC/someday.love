@@ -3,8 +3,14 @@
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Candidate, VENUE_VIBES, BUDGET_TIERS, GUEST_COUNTS } from "@/lib/types";
+import { Candidate, VENUE_VIBES, BUDGET_TIERS, GUEST_COUNTS, getIconComponent } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+// Helper component to render dynamic icons
+function DynamicIcon({ iconName, size, className }: { iconName: string; size: 'small' | 'medium' | 'large' | 'xl'; className?: string }) {
+  const IconComponent = getIconComponent(iconName);
+  return <IconComponent size={size} className={className} />;
+}
 
 interface SwipeCardProps {
   candidate: Candidate;
@@ -67,7 +73,10 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
         {/* Profile Image Placeholder */}
         <div className="relative h-72 bg-gradient-to-br from-primary/30 to-primary/10">
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-8xl">{venueInfo?.icon || "💜"}</span>
+            {venueInfo?.icon ? 
+              <DynamicIcon iconName={venueInfo.icon} size="xl" className="text-primary" />
+              : <span className="text-8xl">💜</span>
+            }
           </div>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
             <h2 className="text-3xl font-bold text-white">
@@ -99,13 +108,16 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
             <h3 className="font-semibold text-muted-foreground">Wedding Vision</h3>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {venueInfo?.icon} {venueInfo?.label}
+                {venueInfo?.icon && <DynamicIcon iconName={venueInfo.icon} size="small" className="text-primary" />}
+                {venueInfo?.label}
               </Badge>
               <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {budgetInfo?.icon} {budgetInfo?.label}
+                {budgetInfo?.icon && <DynamicIcon iconName={budgetInfo.icon} size="small" className="text-primary" />}
+                {budgetInfo?.label}
               </Badge>
               <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {guestInfo?.icon} {guestInfo?.range}
+                {guestInfo?.icon && <DynamicIcon iconName={guestInfo.icon} size="small" className="text-primary" />}
+                {guestInfo?.range}
               </Badge>
             </div>
           </div>

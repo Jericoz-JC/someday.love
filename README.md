@@ -2,7 +2,7 @@
 
 A psychometrically-designed dating app that uses wedding planning preferences as a proxy for long-term compatibility. Built with Next.js, Supabase, and semantic matching.
 
-## 🎯 Core Concept
+## Core Concept
 
 Instead of asking users to write bios, SomeDay.love uses structured questions about their ideal wedding day to reveal:
 - **Financial alignment** (budget preferences correlate with divorce risk)

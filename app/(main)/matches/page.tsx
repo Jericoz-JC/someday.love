@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getMatches } from "@/lib/mock-db";
 import { useAuth } from "@/hooks/use-auth";
 import { Match } from "@/lib/types";
+import { FavoriteIcon } from "@/components/ui/icons";
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -45,9 +46,8 @@ export default function MatchesPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="text-5xl"
           >
-            💕
+            <FavoriteIcon size="large" className="text-rose-gold" />
           </motion.div>
           <p className="text-muted-foreground">Loading your matches...</p>
         </div>

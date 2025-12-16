@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { getCandidates, recordSwipe } from "@/lib/mock-db";
 import { useAuth } from "@/hooks/use-auth";
 import { Candidate } from "@/lib/types";
+import { CelebrationIcon } from "@/components/ui/icons";
 
 export default function DiscoverPage() {
   const router = useRouter();
@@ -157,7 +158,7 @@ export default function DiscoverPage() {
         ) : (
           /* No more candidates */
           <div className="flex flex-col items-center gap-6 text-center">
-            <span className="text-6xl">🎉</span>
+            <CelebrationIcon size="large" className="text-rose-gold" />
             <div className="space-y-2">
               <h2 className="text-2xl font-bold">You&apos;ve seen everyone!</h2>
               <p className="text-muted-foreground">

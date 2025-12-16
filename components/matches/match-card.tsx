@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Match, VENUE_VIBES } from "@/lib/types";
+import { Match, VENUE_VIBES, getIconComponent } from "@/lib/types";
 import { motion } from "framer-motion";
 
 interface MatchCardProps {
@@ -28,7 +29,10 @@ export function MatchCard({ match, index }: MatchCardProps) {
             {/* Avatar */}
             <Avatar className="h-16 w-16 border-2 border-primary/20">
               <AvatarFallback className="bg-primary/10 text-2xl">
-                {venueInfo?.icon || "💜"}
+                {venueInfo?.icon ? 
+                  React.createElement(getIconComponent(venueInfo.icon), { size: "medium", className: "text-primary" })
+                  : "💜"
+                }
               </AvatarFallback>
             </Avatar>
 
@@ -45,7 +49,8 @@ export function MatchCard({ match, index }: MatchCardProps) {
               <p className="text-sm text-muted-foreground">{match.profile.location}</p>
               <div className="flex items-center gap-2 pt-1">
                 <Badge variant="outline" className="gap-1 text-xs">
-                  {venueInfo?.icon} {venueInfo?.label}
+                  {venueInfo?.icon && React.createElement(getIconComponent(venueInfo.icon), { size: "small", className: "text-primary" })}
+                  {venueInfo?.label}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{timeAgo}</span>
               </div>

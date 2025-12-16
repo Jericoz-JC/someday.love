@@ -1,3 +1,11 @@
+import React from 'react';
+import { 
+  SunriseIcon, LeafIcon, SparklesIcon, DiamondIcon,
+  CoupleIcon, SmallGroupIcon, PartyIcon, LargeGroupIcon,
+  RusticIcon, ModernIcon, ClassicIcon, AdventureIcon,
+  WomanIcon, ManIcon, NonBinaryIcon, FamilyIcon
+} from '@/components/ui/icons';
+
 // User profile types based on the database schema
 export type BudgetTier = "micro" | "modest" | "moderate" | "lavish";
 export type GuestCount = "elopement" | "intimate" | "medium" | "large";
@@ -66,26 +74,26 @@ export interface OnboardingData {
 
 // Budget tier options
 export const BUDGET_TIERS: { value: BudgetTier; label: string; range: string; tagline: string; icon: string }[] = [
-  { value: "micro", label: "Micro", range: "< $5,000", tagline: "Just us and the sunset", icon: "🌅" },
-  { value: "modest", label: "Modest", range: "$5k - $15k", tagline: "Meaningful over extravagant", icon: "🌿" },
-  { value: "moderate", label: "Moderate", range: "$15k - $40k", tagline: "Beautiful but balanced", icon: "✨" },
-  { value: "lavish", label: "Lavish", range: "$40k+", tagline: "Once in a lifetime celebration", icon: "💎" },
+  { value: "micro", label: "Micro", range: "< $5,000", tagline: "Just us and the sunset", icon: "sunrise" },
+  { value: "modest", label: "Modest", range: "$5k - $15k", tagline: "Meaningful over extravagant", icon: "leaf" },
+  { value: "moderate", label: "Moderate", range: "$15k - $40k", tagline: "Beautiful but balanced", icon: "sparkles" },
+  { value: "lavish", label: "Lavish", range: "$40k+", tagline: "Once in a lifetime celebration", icon: "diamond" },
 ];
 
 // Guest count options
 export const GUEST_COUNTS: { value: GuestCount; label: string; range: string; description: string; icon: string }[] = [
-  { value: "elopement", label: "Elopement", range: "Just 2", description: "Just the two of us", icon: "💑" },
-  { value: "intimate", label: "Intimate", range: "2-20", description: "Only our closest people", icon: "👨‍👩‍👧" },
-  { value: "medium", label: "Medium", range: "20-100", description: "Friends and family", icon: "🎉" },
-  { value: "large", label: "Large", range: "100+", description: "Everyone we know", icon: "🏟️" },
+  { value: "elopement", label: "Elopement", range: "Just 2", description: "Just the two of us", icon: "couple" },
+  { value: "intimate", label: "Intimate", range: "2-20", description: "Only our closest people", icon: "smallGroup" },
+  { value: "medium", label: "Medium", range: "20-100", description: "Friends and family", icon: "party" },
+  { value: "large", label: "Large", range: "100+", description: "Everyone we know", icon: "largeGroup" },
 ];
 
 // Venue vibe options
 export const VENUE_VIBES: { value: VenueVibe; label: string; examples: string; personality: string; icon: string; image: string }[] = [
-  { value: "rustic", label: "Rustic / Boho", examples: "Barn, vineyard, forest", personality: "Authenticity & Nature", icon: "🌾", image: "/venues/rustic.jpg" },
-  { value: "modern", label: "Modern / Minimal", examples: "Rooftop, gallery, loft", personality: "Efficiency & Status", icon: "🏙️", image: "/venues/modern.jpg" },
-  { value: "classic", label: "Classic / Traditional", examples: "Ballroom, church, estate", personality: "Tradition & Security", icon: "🏛️", image: "/venues/classic.jpg" },
-  { value: "adventure", label: "Adventure / Elopement", examples: "Mountain, beach, destination", personality: "Experience & Independence", icon: "⛰️", image: "/venues/adventure.jpg" },
+  { value: "rustic", label: "Rustic / Boho", examples: "Barn, vineyard, forest", personality: "Authenticity & Nature", icon: "rustic", image: "/venues/rustic.jpg" },
+  { value: "modern", label: "Modern / Minimal", examples: "Rooftop, gallery, loft", personality: "Efficiency & Status", icon: "modern", image: "/venues/modern.jpg" },
+  { value: "classic", label: "Classic / Traditional", examples: "Ballroom, church, estate", personality: "Tradition & Security", icon: "classic", image: "/venues/classic.jpg" },
+  { value: "adventure", label: "Adventure / Elopement", examples: "Mountain, beach, destination", personality: "Experience & Independence", icon: "adventure", image: "/venues/adventure.jpg" },
 ];
 
 // Gender options
@@ -116,3 +124,26 @@ export const LOCATIONS: string[] = [
   "Portland, OR",
   "Nashville, TN",
 ];
+
+// Helper function to get icon component by name
+export function getIconComponent(iconName: string) {
+  const iconMap: { [key: string]: React.ComponentType<any> } = {
+    "sunrise": SunriseIcon,
+    "leaf": LeafIcon,
+    "sparkles": SparklesIcon,
+    "diamond": DiamondIcon,
+    "couple": CoupleIcon,
+    "smallGroup": SmallGroupIcon,
+    "party": PartyIcon,
+    "largeGroup": LargeGroupIcon,
+    "rustic": RusticIcon,
+    "modern": ModernIcon,
+    "classic": ClassicIcon,
+    "adventure": AdventureIcon,
+    "woman": WomanIcon,
+    "man": ManIcon,
+    "non-binary": NonBinaryIcon,
+    "family": FamilyIcon,
+  };
+  return iconMap[iconName] || SunriseIcon;
+}

@@ -22,8 +22,10 @@ import {
   BudgetTier,
   GuestCount,
   VenueVibe,
+  getIconComponent,
 } from "@/lib/types";
 import { generateNarrative } from "@/lib/tbnlg";
+import { AttachMoneyIcon, PeopleIcon, AutoAwesomeIcon } from "@/components/ui/icons";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -205,7 +207,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <span className="text-4xl">💰</span>
+              <AttachMoneyIcon size="large" className="text-rose-gold mx-auto" />
               <h1 className="text-2xl font-bold">Wedding Budget</h1>
               <p className="text-muted-foreground">
                 Financial alignment is the #1 predictor of relationship success
@@ -232,7 +234,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <span className="text-4xl">👥</span>
+              <PeopleIcon size="large" className="text-rose-gold mx-auto" />
               <h1 className="text-2xl font-bold">Guest Count</h1>
               <p className="text-muted-foreground">
                 How many people would you want at your celebration?
@@ -259,7 +261,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <span className="text-4xl">✨</span>
+              <AutoAwesomeIcon size="large" className="text-rose-gold mx-auto" />
               <h1 className="text-2xl font-bold">Venue Vibe</h1>
               <p className="text-muted-foreground">
                 Your aesthetic preferences reveal your personality type
@@ -354,7 +356,7 @@ export default function OnboardingPage() {
               {isSubmitting
                 ? "Creating profile..."
                 : step === totalSteps
-                ? "Find Matches ✨"
+                ? "Find Matches"
                 : "Continue"}
             </Button>
           </div>

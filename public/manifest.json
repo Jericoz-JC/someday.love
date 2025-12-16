@@ -4,8 +4,8 @@
   "description": "Find your forever person through wedding vision compatibility",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#8b5cf6",
+  "background_color": "#fefdfc",
+  "theme_color": "#ce7162",
   "orientation": "portrait",
   "icons": [
     {

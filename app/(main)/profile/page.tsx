@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,9 @@ import {
   BudgetTier,
   GuestCount,
   VenueVibe,
+  getIconComponent,
 } from "@/lib/types";
+import { FamilyIcon } from "@/components/ui/icons";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -115,22 +117,22 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  <span className="text-3xl">{venueInfo?.icon}</span>
+                  {venueInfo?.icon && React.createElement(getIconComponent(venueInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
                   <p className="mt-2 font-medium">{venueInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Venue Style</p>
                 </div>
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  <span className="text-3xl">{budgetInfo?.icon}</span>
+                  {budgetInfo?.icon && React.createElement(getIconComponent(budgetInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
                   <p className="mt-2 font-medium">{budgetInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Budget</p>
                 </div>
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  <span className="text-3xl">{guestInfo?.icon}</span>
+                  {guestInfo?.icon && React.createElement(getIconComponent(guestInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
                   <p className="mt-2 font-medium">{guestInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Guest Count</p>
                 </div>
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  <span className="text-3xl">👨‍👩‍👧‍👦</span>
+                  <FamilyIcon size="large" className="text-rose-gold mx-auto" />
                   <p className="mt-2 font-medium">{profile.family_involvement}/5</p>
                   <p className="text-xs text-muted-foreground">Family Input</p>
                 </div>

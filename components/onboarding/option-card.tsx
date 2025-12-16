@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { getIconComponent } from "@/lib/types";
 
 interface OptionCardProps {
   icon: string;
@@ -22,6 +23,8 @@ export function OptionCard({
   onSelect,
   size = "default",
 }: OptionCardProps) {
+  const IconComponent = getIconComponent(icon);
+
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
@@ -34,7 +37,12 @@ export function OptionCard({
           : "border-border bg-card hover:border-primary/50 hover:bg-accent/50"
       )}
     >
-      <span className={cn("text-3xl", size === "large" && "text-4xl")}>{icon}</span>
+      <IconComponent 
+        size={size === "large" ? "large" : "medium"} 
+        className={cn(
+          selected ? "text-primary" : "text-muted-foreground"
+        )} 
+      />
       <span className={cn("font-semibold", size === "large" ? "text-lg" : "text-base")}>
         {label}
       </span>

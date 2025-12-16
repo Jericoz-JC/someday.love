@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { getIconComponent } from "@/lib/types";
 
 interface VenueCardProps {
   icon: string;
@@ -20,6 +21,8 @@ export function VenueCard({
   selected,
   onSelect,
 }: VenueCardProps) {
+  const IconComponent = getIconComponent(icon);
+
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
@@ -34,11 +37,16 @@ export function VenueCard({
     >
       <div
         className={cn(
-          "flex h-16 w-16 items-center justify-center rounded-full text-4xl",
+          "flex h-16 w-16 items-center justify-center rounded-full",
           selected ? "bg-primary/20" : "bg-muted"
         )}
       >
-        {icon}
+        <IconComponent 
+          size="medium" 
+          className={cn(
+            selected ? "text-primary" : "text-muted-foreground"
+          )} 
+        />
       </div>
       <span className="text-lg font-semibold">{label}</span>
       <span className="text-sm text-muted-foreground">{examples}</span>

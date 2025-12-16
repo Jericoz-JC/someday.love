@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { Sparkles, Users, Heart, DollarSign } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -25,22 +27,22 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: "💰",
+      icon: DollarSign,
       title: "Financial Alignment",
       description: "Budget preferences predict relationship success",
     },
     {
-      icon: "👥",
+      icon: Users,
       title: "Social Compatibility",
       description: "Guest count reveals your social style",
     },
     {
-      icon: "✨",
+      icon: Sparkles,
       title: "Aesthetic Harmony",
       description: "Venue vibes map to personality types",
     },
     {
-      icon: "👨‍👩‍👧‍👦",
+      icon: Heart,
       title: "Boundary Matching",
       description: "Family involvement shows boundary styles",
     },
@@ -58,14 +60,9 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="space-y-4"
           >
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-6xl bg-white">💜</span>
+            <div className="flex items-center justify-center">
+              <Logo size="xl" variant="full" />
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">
-              <span className="bg-gradient-to-r from-pink-500 via-primary to-purple-600 bg-clip-text text-transparent">
-                SomeDay.love
-              </span>
-            </h1>
             <p className="text-xl text-muted-foreground">
               Find your forever through wedding vision
             </p>
@@ -97,7 +94,7 @@ export default function LandingPage() {
                 transition={{ delay: 0.4 + index * 0.1 }}
                 className="rounded-2xl border bg-card p-4 text-left shadow-sm"
               >
-                <span className="text-2xl">{feature.icon}</span>
+                <feature.icon className="h-6 w-6 text-primary" />
                 <h3 className="mt-2 font-semibold text-sm">{feature.title}</h3>
                 <p className="text-xs text-muted-foreground">
                   {feature.description}
@@ -113,7 +110,7 @@ export default function LandingPage() {
             transition={{ delay: 0.8 }}
             className="text-sm text-muted-foreground"
           >
-            📊 Based on relationship research showing financial alignment
+            Based on relationship research showing financial alignment
             predicts 1.6-3.5x better relationship outcomes
           </motion.p>
 
@@ -127,7 +124,7 @@ export default function LandingPage() {
             <Button
               size="xl"
               onClick={handleGetStarted}
-              className="w-full bg-gradient-to-r from-pink-500 to-primary text-lg shadow-lg hover:from-pink-600 hover:to-primary/90"
+              className="w-full bg-rose-gold-gradient text-lg text-white shadow-lg hover:opacity-90"
             >
               Get Started — It&apos;s Free
             </Button>
