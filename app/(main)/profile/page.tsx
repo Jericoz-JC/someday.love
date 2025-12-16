@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,12 @@ import {
   getIconComponent,
 } from "@/lib/types";
 import { FamilyIcon } from "@/components/ui/icons";
+
+// Helper component to render dynamic icons
+function DynamicIcon({ iconName, size, className }: { iconName: string; size: 'small' | 'medium' | 'large' | 'xl'; className?: string }) {
+  const IconComponent = getIconComponent(iconName);
+  return <IconComponent size={size} className={className} />;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -117,17 +123,17 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  {venueInfo?.icon && React.createElement(getIconComponent(venueInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
+                  {venueInfo?.icon && <DynamicIcon iconName={venueInfo.icon} size="large" className="text-rose-gold mx-auto" />}
                   <p className="mt-2 font-medium">{venueInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Venue Style</p>
                 </div>
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  {budgetInfo?.icon && React.createElement(getIconComponent(budgetInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
+                  {budgetInfo?.icon && <DynamicIcon iconName={budgetInfo.icon} size="large" className="text-rose-gold mx-auto" />}
                   <p className="mt-2 font-medium">{budgetInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Budget</p>
                 </div>
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
-                  {guestInfo?.icon && React.createElement(getIconComponent(guestInfo.icon), { size: "large", className: "text-rose-gold mx-auto" })}
+                  {guestInfo?.icon && <DynamicIcon iconName={guestInfo.icon} size="large" className="text-rose-gold mx-auto" />}
                   <p className="mt-2 font-medium">{guestInfo?.label}</p>
                   <p className="text-xs text-muted-foreground">Guest Count</p>
                 </div>

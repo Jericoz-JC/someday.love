@@ -1,12 +1,17 @@
 "use client";
 
-import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Match, VENUE_VIBES, getIconComponent } from "@/lib/types";
 import { motion } from "framer-motion";
+
+// Helper component to render dynamic icons
+function DynamicIcon({ iconName, size, className }: { iconName: string; size: 'small' | 'medium' | 'large' | 'xl'; className?: string }) {
+  const IconComponent = getIconComponent(iconName);
+  return <IconComponent size={size} className={className} />;
+}
 
 interface MatchCardProps {
   match: Match;
@@ -30,7 +35,7 @@ export function MatchCard({ match, index }: MatchCardProps) {
             <Avatar className="h-16 w-16 border-2 border-primary/20">
               <AvatarFallback className="bg-primary/10 text-2xl">
                 {venueInfo?.icon ? 
-                  React.createElement(getIconComponent(venueInfo.icon), { size: "medium", className: "text-primary" })
+                  <DynamicIcon iconName={venueInfo.icon} size="medium" className="text-primary" />
                   : "💜"
                 }
               </AvatarFallback>
@@ -49,7 +54,7 @@ export function MatchCard({ match, index }: MatchCardProps) {
               <p className="text-sm text-muted-foreground">{match.profile.location}</p>
               <div className="flex items-center gap-2 pt-1">
                 <Badge variant="outline" className="gap-1 text-xs">
-                  {venueInfo?.icon && React.createElement(getIconComponent(venueInfo.icon), { size: "small", className: "text-primary" })}
+                  {venueInfo?.icon && <DynamicIcon iconName={venueInfo.icon} size="small" className="text-primary" />}
                   {venueInfo?.label}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{timeAgo}</span>
