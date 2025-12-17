@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ function DynamicIcon({ iconName, size, className }: { iconName: string; size: 's
 
 export default function ProfilePage() {
   const router = useRouter();
+  const clerk = useClerk();
   const {
     isAuthenticated,
     hasCompletedOnboarding,
@@ -48,9 +50,20 @@ export default function ProfilePage() {
     }
   }, [isLoading, isAuthenticated, hasCompletedOnboarding, router]);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    // Sign out from both Clerk and mock auth
+    try {
+      if (clerk.user) {
+        await clerk.signOut();
+      }
+    } catch (error) {
+      console.error("Error signing out from Clerk:", error);
+    }
+    
     signOut();
-    router.push("/");
+    
+    // Use hard navigation to ensure complete sign out
+    window.location.href = "/";
   };
 
   const handleResetData = () => {
@@ -210,3 +223,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

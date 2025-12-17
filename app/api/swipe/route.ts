@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Swipe API Route
@@ -13,9 +14,17 @@ const swipes: Map<string, { targetId: string; liked: boolean }[]> = new Map();
 // POST /api/swipe - Record a swipe
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { targetId, liked, compatibilityScore } = body;
-    const userId = request.headers.get("x-user-id") || "mock-user";
 
     if (!targetId || typeof liked !== "boolean") {
       return NextResponse.json(
@@ -81,7 +90,14 @@ export async function POST(request: NextRequest) {
 // GET /api/swipe - Get swipe history
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id") || "mock-user";
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Placeholder: In production, query Supabase
     // const { data, error } = await supabase
@@ -104,3 +120,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

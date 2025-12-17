@@ -271,6 +271,7 @@ export async function getProfileByClerkId(clerkId: string): Promise<Profile | nu
   // In production, this would query Supabase
   if (typeof window === "undefined") return null;
   
-  const stored = localStorage.getItem("someday_mock_profile");
+  const stored = localStorage.getItem(`someday_mock_profile:${clerkId}`);
   return stored ? JSON.parse(stored) : null;
 }
+

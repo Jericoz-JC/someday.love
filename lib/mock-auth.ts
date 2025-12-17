@@ -16,8 +16,20 @@ const MOCK_USER = {
 };
 
 // Storage key for mock auth state
-const AUTH_STORAGE_KEY = "someday_mock_auth";
-const PROFILE_STORAGE_KEY = "someday_mock_profile";
+const LEGACY_AUTH_STORAGE_KEY = "someday_mock_auth";
+const LEGACY_PROFILE_STORAGE_KEY = "someday_mock_profile";
+const AUTH_STORAGE_KEY_PREFIX = "someday_mock_auth:";
+const PROFILE_STORAGE_KEY_PREFIX = "someday_mock_profile:";
+
+function getAuthStorageKey(clerkUserId?: string | null): string {
+  return clerkUserId ? `${AUTH_STORAGE_KEY_PREFIX}${clerkUserId}` : LEGACY_AUTH_STORAGE_KEY;
+}
+
+function getProfileStorageKey(clerkUserId?: string | null): string {
+  return clerkUserId
+    ? `${PROFILE_STORAGE_KEY_PREFIX}${clerkUserId}`
+    : LEGACY_PROFILE_STORAGE_KEY;
+}
 
 export interface MockUser {
   id: string;
@@ -35,12 +47,12 @@ export interface AuthState {
 /**
  * Get current auth state from localStorage
  */
-export function getAuthState(): AuthState {
+export function getAuthState(clerkUserId?: string | null): AuthState {
   if (typeof window === "undefined") {
     return { isAuthenticated: false, user: null, hasCompletedOnboarding: false };
   }
   
-  const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+  const stored = localStorage.getItem(getAuthStorageKey(clerkUserId));
   if (stored) {
     return JSON.parse(stored);
   }
@@ -50,15 +62,15 @@ export function getAuthState(): AuthState {
 /**
  * Mock sign in - instantly authenticates the user
  */
-export function mockSignIn(): AuthState {
+export function mockSignIn(clerkUserId?: string | null): AuthState {
   const state: AuthState = {
     isAuthenticated: true,
     user: MOCK_USER,
-    hasCompletedOnboarding: checkOnboardingStatus(),
+    hasCompletedOnboarding: checkOnboardingStatus(clerkUserId),
   };
   
   if (typeof window !== "undefined") {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(getAuthStorageKey(clerkUserId), JSON.stringify(state));
   }
   
   return state;
@@ -67,7 +79,7 @@ export function mockSignIn(): AuthState {
 /**
  * Mock sign out
  */
-export function mockSignOut(): AuthState {
+export function mockSignOut(clerkUserId?: string | null): AuthState {
   const state: AuthState = {
     isAuthenticated: false,
     user: null,
@@ -75,7 +87,7 @@ export function mockSignOut(): AuthState {
   };
   
   if (typeof window !== "undefined") {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(getAuthStorageKey(clerkUserId), JSON.stringify(state));
   }
   
   return state;
@@ -84,21 +96,21 @@ export function mockSignOut(): AuthState {
 /**
  * Check if user has completed onboarding
  */
-export function checkOnboardingStatus(): boolean {
+export function checkOnboardingStatus(clerkUserId?: string | null): boolean {
   if (typeof window === "undefined") return false;
-  const profile = localStorage.getItem(PROFILE_STORAGE_KEY);
+  const profile = localStorage.getItem(getProfileStorageKey(clerkUserId));
   return profile !== null;
 }
 
 /**
  * Mark onboarding as complete
  */
-export function completeOnboarding(): void {
-  const state = getAuthState();
+export function completeOnboarding(clerkUserId?: string | null): void {
+  const state = getAuthState(clerkUserId);
   state.hasCompletedOnboarding = true;
   
   if (typeof window !== "undefined") {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(getAuthStorageKey(clerkUserId), JSON.stringify(state));
   }
 }
 
@@ -113,19 +125,23 @@ export function getCurrentClerkId(): string | null {
 /**
  * Save user profile to mock storage
  */
-export function saveProfile(profile: Partial<Profile>): void {
+export function saveProfile(clerkUserId: string, profile: Partial<Profile>): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    completeOnboarding();
+    const storedProfile: Partial<Profile> = {
+      ...profile,
+      clerk_id: clerkUserId,
+    };
+    localStorage.setItem(getProfileStorageKey(clerkUserId), JSON.stringify(storedProfile));
+    completeOnboarding(clerkUserId);
   }
 }
 
 /**
  * Get user profile from mock storage
  */
-export function getProfile(): Partial<Profile> | null {
+export function getProfile(clerkUserId: string): Partial<Profile> | null {
   if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+  const stored = localStorage.getItem(getProfileStorageKey(clerkUserId));
   return stored ? JSON.parse(stored) : null;
 }
 
@@ -134,9 +150,18 @@ export function getProfile(): Partial<Profile> | null {
  */
 export function clearMockData(): void {
   if (typeof window !== "undefined") {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(PROFILE_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_PROFILE_STORAGE_KEY);
     localStorage.removeItem("someday_mock_swipes");
     localStorage.removeItem("someday_mock_matches");
+
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (key.startsWith(AUTH_STORAGE_KEY_PREFIX) || key.startsWith(PROFILE_STORAGE_KEY_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    }
   }
 }
+

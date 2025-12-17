@@ -71,3 +71,4 @@ export function VenueGrid({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

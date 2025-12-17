@@ -1,11 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StepIndicator, StepDots } from "@/components/onboarding/step-indicator";
 import { OptionCard, OptionGrid } from "@/components/onboarding/option-card";
 import { VenueCard, VenueGrid } from "@/components/onboarding/venue-card";
@@ -26,10 +37,12 @@ import {
 } from "@/lib/types";
 import { generateNarrative } from "@/lib/tbnlg";
 import { AttachMoneyIcon, PeopleIcon, AutoAwesomeIcon } from "@/components/ui/icons";
+import { X } from "lucide-react";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { completeOnboarding } = useAuth();
+  const clerk = useClerk();
+  const { completeOnboarding, signOut } = useAuth();
   const {
     step,
     data,
@@ -41,18 +54,26 @@ export default function OnboardingPage() {
   } = useOnboarding();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const stepRef = useRef(step);
+  const isExitingRef = useRef(false);
+
+  // Keep stepRef in sync with step
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
 
   const handleComplete = async () => {
     if (!canProceed) return;
-    
+
     setIsSubmitting(true);
-    
+
     // Generate narrative from preferences
     const narrative = generateNarrative({
       budget_tier: data.budget_tier as BudgetTier,
       guest_count: data.guest_count as GuestCount,
       venue_vibe: data.venue_vibe as VenueVibe,
-      family_involvement: data.family_involvement,
+      family_involvement: data.family_involvement ?? 3,
     });
 
     // Save profile with mock auth
@@ -69,9 +90,64 @@ export default function OnboardingPage() {
       narrative,
     });
 
-    // Navigate to discover
-    router.push("/discover");
+    // Use hard navigation to ensure auth state updates
+    setTimeout(() => {
+      window.location.href = "/discover";
+    }, 100);
   };
+
+  const handleExit = () => {
+    setShowExitDialog(true);
+  };
+
+  const confirmExit = async () => {
+    isExitingRef.current = true;
+    setShowExitDialog(false);
+
+    // Sign out from both Clerk and mock auth
+    try {
+      if (clerk.user) {
+        await clerk.signOut();
+      }
+    } catch (error) {
+      console.error("Error signing out from Clerk:", error);
+    }
+
+    signOut();
+
+    // Use hard navigation to ensure complete sign out
+    window.location.href = "/";
+  };
+
+  // Handle browser back button
+  const handlePopState = useCallback((event: PopStateEvent) => {
+    if (stepRef.current === 1) {
+      event.preventDefault();
+      setShowExitDialog(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [handlePopState]);
+
+  // Prevent accidental navigation away
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isExitingRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -106,7 +182,7 @@ export default function OnboardingPage() {
                 <Input
                   id="name"
                   placeholder="Your name"
-                  value={data.name}
+                  value={data.name || ""}
                   onChange={(e) => updateData({ name: e.target.value })}
                   className="h-14 text-lg"
                   autoFocus
@@ -174,11 +250,10 @@ export default function OnboardingPage() {
                     <button
                       key={location}
                       onClick={() => updateData({ location })}
-                      className={`rounded-xl border-2 p-3 text-sm text-left transition-all ${
-                        data.location === location
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      }`}
+                      className={`rounded-xl border-2 p-3 text-sm text-left transition-all ${data.location === location
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                        }`}
                     >
                       {location}
                     </button>
@@ -294,7 +369,7 @@ export default function OnboardingPage() {
               </p>
             </div>
             <FamilySlider
-              value={data.family_involvement}
+              value={data.family_involvement ?? 3}
               onChange={(value) => updateData({ family_involvement: value })}
             />
           </div>
@@ -310,7 +385,20 @@ export default function OnboardingPage() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="mx-auto max-w-lg px-4 py-4">
-          <StepIndicator currentStep={step} totalSteps={totalSteps} />
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <StepIndicator currentStep={step} totalSteps={totalSteps} />
+            </div>
+            {step === 1 && (
+              <button
+                onClick={handleExit}
+                className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                aria-label="Exit onboarding"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -356,13 +444,36 @@ export default function OnboardingPage() {
               {isSubmitting
                 ? "Creating profile..."
                 : step === totalSteps
-                ? "Find Matches"
-                : "Continue"}
+                  ? "Find Matches"
+                  : "Continue"}
             </Button>
           </div>
           <StepDots currentStep={step} totalSteps={totalSteps} />
         </div>
       </footer>
+
+      {/* Exit Confirmation Dialog */}
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Onboarding?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your progress will be saved. You can continue later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">
+              Continue Onboarding
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmExit}
+              className="w-full sm:w-auto"
+            >
+              Exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

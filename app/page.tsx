@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/ui/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Sparkles, Users, Heart, DollarSign } from "lucide-react";
 
 export default function LandingPage() {
@@ -21,8 +22,8 @@ export default function LandingPage() {
   }, [isLoading, isAuthenticated, hasCompletedOnboarding, router]);
 
   const handleGetStarted = () => {
-    signIn();
-    router.push("/onboarding");
+    // Sign in will be handled by Clerk's SignInButton modal
+    // After sign in, user will be redirected automatically
   };
 
   const features = [
@@ -121,13 +122,24 @@ export default function LandingPage() {
             transition={{ delay: 0.6, duration: 0.5 }}
             className="space-y-4 pt-4"
           >
-            <Button
-              size="xl"
-              onClick={handleGetStarted}
-              className="w-full bg-rose-gold-gradient text-lg text-white shadow-lg hover:opacity-90"
-            >
-              Get Started — It&apos;s Free
-            </Button>
+            <div className="space-y-3 w-full">
+              <SignInButton mode="modal">
+                <Button
+                  size="xl"
+                  className="w-full bg-rose-gold-gradient text-lg text-white shadow-lg hover:opacity-90"
+                >
+                  Sign In
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button
+                  size="xl"
+                  className="w-full bg-rose-gold-gradient text-lg text-white shadow-lg hover:opacity-90"
+                >
+                  Sign Up — It&apos;s Free
+                </Button>
+              </SignUpButton>
+            </div>
             <p className="text-xs text-muted-foreground">
               7 questions • 3 minutes • Find your match
             </p>

@@ -67,3 +67,4 @@ export function FamilySlider({ value, onChange }: FamilySliderProps) {
     </div>
   );
 }
+

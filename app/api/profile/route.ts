@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Profile API Route
@@ -10,20 +11,26 @@ import { NextRequest, NextResponse } from "next/server";
 // GET /api/profile - Get user profile
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Get clerk ID from auth headers
-    const clerkId = request.headers.get("x-clerk-user-id") || "mock-user";
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Placeholder: In production, query Supabase
     // const { data, error } = await supabase
     //   .from("profiles")
     //   .select("*")
-    //   .eq("clerk_id", clerkId)
+    //   .eq("clerk_id", userId)
     //   .single();
 
     // Mock response for development
     const mockProfile = {
       id: "mock-profile-id",
-      clerk_id: clerkId,
+      clerk_id: userId,
       name: "Demo User",
       age: 28,
       gender: "woman",
@@ -51,8 +58,16 @@ export async function GET(request: NextRequest) {
 // POST /api/profile - Create or update profile
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
-    const clerkId = request.headers.get("x-clerk-user-id") || "mock-user";
 
     // Validate required fields
     const requiredFields = [
@@ -80,7 +95,7 @@ export async function POST(request: NextRequest) {
     // const { data, error } = await supabase
     //   .from("profiles")
     //   .upsert({
-    //     clerk_id: clerkId,
+    //     clerk_id: userId,
     //     ...body,
     //     updated_at: new Date().toISOString(),
     //   })
@@ -92,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     const profile = {
       id: "mock-profile-id",
-      clerk_id: clerkId,
+      clerk_id: userId,
       ...body,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -107,3 +122,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

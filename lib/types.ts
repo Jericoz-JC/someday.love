@@ -147,3 +147,4 @@ export function getIconComponent(iconName: string) {
   };
   return iconMap[iconName] || SunriseIcon;
 }
+

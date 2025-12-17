@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Candidates API Route
@@ -64,9 +65,17 @@ const MOCK_CANDIDATES = [
 // GET /api/candidates - Get potential matches
 export async function GET(request: NextRequest) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
-    const userId = request.headers.get("x-user-id") || "mock-user";
 
     // Placeholder: In production, call Supabase hybrid search function
     // const { data, error } = await supabase.rpc("find_matches", {
@@ -98,3 +107,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

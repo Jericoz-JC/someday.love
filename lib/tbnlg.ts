@@ -164,3 +164,4 @@ export function getPsychometricSignals(preferences: {
     boundaryStyle: boundarySignals[Math.min(5, Math.max(1, preferences.family_involvement))],
   };
 }
+

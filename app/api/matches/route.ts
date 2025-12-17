@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 /**
  * Matches API Route
@@ -54,7 +55,14 @@ const MOCK_MATCHES = [
 // GET /api/matches - Get all matches
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id") || "mock-user";
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Placeholder: In production, query Supabase for mutual matches
     // const { data, error } = await supabase
@@ -100,3 +108,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

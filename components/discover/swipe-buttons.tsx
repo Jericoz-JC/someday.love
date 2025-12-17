@@ -58,3 +58,4 @@ export function SwipeButtons({ onPass, onLike, disabled }: SwipeButtonsProps) {
     </div>
   );
 }
+

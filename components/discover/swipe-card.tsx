@@ -131,3 +131,4 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
     </motion.div>
   );
 }
+

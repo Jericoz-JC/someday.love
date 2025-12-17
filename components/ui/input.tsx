@@ -3,6 +3,11 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  // #region agent log
+  if (typeof window !== 'undefined') {
+    fetch('http://127.0.0.1:7242/ingest/975ffa39-42b0-4432-bc40-1e80be82c99b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'components/ui/input.tsx:5', message: 'Input component render', data: { value: props.value, valueType: typeof props.value, isUndefined: props.value === undefined, id: props.id }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => {});
+  }
+  // #endregion
   return (
     <input
       type={type}
@@ -19,3 +24,4 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 }
 
 export { Input }
+
