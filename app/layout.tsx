@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -56,8 +57,10 @@ export default function RootLayout({
         <body className={`${outfit.variable} font-sans antialiased`}>
           {children}
           <Toaster position="top-center" />
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
   );
 }
+
