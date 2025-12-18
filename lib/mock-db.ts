@@ -126,11 +126,11 @@ const MOCK_MATCHES: Match[] = [
 export async function getCandidates(userId: string): Promise<Candidate[]> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   // Get already swiped candidates
   const swipes = getSwipes();
   const swipedIds = new Set(swipes.map(s => s.target_id));
-  
+
   // Filter out already swiped candidates
   return MOCK_CANDIDATES.filter(c => !swipedIds.has(c.id));
 }
@@ -145,7 +145,7 @@ export async function recordSwipe(
   compatibilityScore?: number
 ): Promise<{ isMatch: boolean }> {
   await new Promise(resolve => setTimeout(resolve, 300));
-  
+
   const swipe: Swipe = {
     id: `swipe-${Date.now()}`,
     user_id: userId,
@@ -154,17 +154,17 @@ export async function recordSwipe(
     compatibility_score: compatibilityScore,
     created_at: new Date().toISOString(),
   };
-  
+
   // Save swipe to localStorage
   const swipes = getSwipes();
   swipes.push(swipe);
   if (typeof window !== "undefined") {
     localStorage.setItem(SWIPES_STORAGE_KEY, JSON.stringify(swipes));
   }
-  
+
   // Simulate match (30% chance if liked)
   const isMatch = liked && Math.random() > 0.7;
-  
+
   if (isMatch) {
     // Add to matches
     const candidate = MOCK_CANDIDATES.find(c => c.id === targetId);
@@ -190,7 +190,7 @@ export async function recordSwipe(
         match_explanation: generateMatchExplanation(candidate),
         matched_at: new Date().toISOString(),
       };
-      
+
       const matches = getMatches();
       matches.push(match);
       if (typeof window !== "undefined") {
@@ -198,7 +198,7 @@ export async function recordSwipe(
       }
     }
   }
-  
+
   return { isMatch };
 }
 
@@ -217,8 +217,18 @@ export function getSwipes(): Swipe[] {
 export function getMatches(): Match[] {
   if (typeof window === "undefined") return [...MOCK_MATCHES];
   const stored = localStorage.getItem(MATCHES_STORAGE_KEY);
-  const savedMatches = stored ? JSON.parse(stored) : [];
-  return [...MOCK_MATCHES, ...savedMatches];
+  const savedMatches: Match[] = stored ? JSON.parse(stored) : [];
+
+  // Combine and deduplicate by profile ID (savedMatches take priority as they're newer)
+  const matchMap = new Map<string, Match>();
+  for (const match of MOCK_MATCHES) {
+    matchMap.set(match.profile.id, match);
+  }
+  for (const match of savedMatches) {
+    matchMap.set(match.profile.id, match);
+  }
+
+  return Array.from(matchMap.values());
 }
 
 /**
@@ -231,7 +241,7 @@ function generateMatchExplanation(candidate: Candidate): string {
     classic: `You both cherish tradition and timeless elegance. ${candidate.name}'s classic preferences suggest someone who values heritage and established customs, just like you.`,
     adventure: `You share a spirit of adventure and spontaneity. ${candidate.name}'s love for unique experiences indicates a free-spirited personality that matches your energy.`,
   };
-  
+
   return explanations[candidate.venue_vibe];
 }
 
@@ -241,7 +251,7 @@ function generateMatchExplanation(candidate: Candidate): string {
  */
 export async function upsertProfile(profile: Partial<Profile>): Promise<Profile> {
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   const fullProfile: Profile = {
     id: profile.id || `profile-${Date.now()}`,
     clerk_id: profile.clerk_id || "mock-clerk-id",
@@ -258,7 +268,7 @@ export async function upsertProfile(profile: Partial<Profile>): Promise<Profile>
     created_at: profile.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  
+
   return fullProfile;
 }
 
@@ -267,11 +277,277 @@ export async function upsertProfile(profile: Partial<Profile>): Promise<Profile>
  */
 export async function getProfileByClerkId(clerkId: string): Promise<Profile | null> {
   await new Promise(resolve => setTimeout(resolve, 300));
-  
+
   // In production, this would query Supabase
   if (typeof window === "undefined") return null;
-  
+
   const stored = localStorage.getItem(`someday_mock_profile:${clerkId}`);
   return stored ? JSON.parse(stored) : null;
+}
+
+// ============================================
+// CHAT SYSTEM (Mock - migrate to Supabase Realtime later)
+// ============================================
+
+const CONVERSATIONS_STORAGE_KEY = "someday_mock_conversations";
+const MESSAGES_STORAGE_KEY = "someday_mock_messages";
+const NOTIFICATIONS_STORAGE_KEY = "someday_mock_notifications";
+
+import { Conversation, Message, Notification } from "./types";
+
+// Initialize mock conversation for the pre-existing match
+function initializeMockConversations(): Conversation[] {
+  return [
+    {
+      id: "conv-1",
+      match_id: "match-1",
+      participant_1: "current-user",
+      participant_2: "cand-1",
+      last_message: "Hey! I saw we matched. Love your venue choice! 💜",
+      last_message_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      unread_count: 1,
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ];
+}
+
+function initializeMockMessages(): Message[] {
+  return [
+    {
+      id: "msg-1",
+      conversation_id: "conv-1",
+      sender_id: "cand-1",
+      content: "Hey! I saw we matched. Love your venue choice! 💜",
+      type: "text",
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+    },
+  ];
+}
+
+function initializeMockNotifications(): Notification[] {
+  return [
+    {
+      id: "notif-1",
+      user_id: "current-user",
+      type: "match",
+      title: "New Match! 💜",
+      body: "You and Alex matched! Start a conversation now.",
+      read: false,
+      data: { matchId: "match-1" },
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+    },
+  ];
+}
+
+/**
+ * Get all conversations for current user
+ * TODO: Replace with Supabase query with RLS
+ */
+export function getConversations(): Conversation[] {
+  if (typeof window === "undefined") return initializeMockConversations();
+  const stored = localStorage.getItem(CONVERSATIONS_STORAGE_KEY);
+  if (!stored) {
+    const initial = initializeMockConversations();
+    localStorage.setItem(CONVERSATIONS_STORAGE_KEY, JSON.stringify(initial));
+    return initial;
+  }
+  return JSON.parse(stored);
+}
+
+/**
+ * Get or create a conversation for a match
+ * TODO: Replace with Supabase upsert
+ */
+export function getOrCreateConversation(matchId: string, matchProfile: Profile): Conversation {
+  const conversations = getConversations();
+  let conversation = conversations.find(c => c.match_id === matchId);
+
+  if (!conversation) {
+    conversation = {
+      id: `conv-${Date.now()}`,
+      match_id: matchId,
+      participant_1: "current-user",
+      participant_2: matchProfile.id,
+      unread_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    conversations.push(conversation);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CONVERSATIONS_STORAGE_KEY, JSON.stringify(conversations));
+    }
+  }
+
+  return conversation;
+}
+
+/**
+ * Get messages for a conversation
+ * TODO: Replace with Supabase query + Realtime subscription
+ */
+export function getMessages(conversationId: string): Message[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
+  const messages: Message[] = stored ? JSON.parse(stored) : initializeMockMessages();
+
+  // Initialize if empty
+  if (!stored) {
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+  }
+
+  return messages.filter(m => m.conversation_id === conversationId);
+}
+
+/**
+ * Send a message
+ * TODO: Replace with Supabase insert + Broadcast for instant delivery
+ */
+export function sendMessage(conversationId: string, content: string, senderId: string = "current-user"): Message {
+  const message: Message = {
+    id: `msg-${Date.now()}`,
+    conversation_id: conversationId,
+    sender_id: senderId,
+    content,
+    type: "text",
+    created_at: new Date().toISOString(),
+  };
+
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem(MESSAGES_STORAGE_KEY);
+    const messages: Message[] = stored ? JSON.parse(stored) : [];
+    messages.push(message);
+    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+
+    // Update conversation last message
+    const conversations = getConversations();
+    const conv = conversations.find(c => c.id === conversationId);
+    if (conv) {
+      conv.last_message = content;
+      conv.last_message_at = message.created_at;
+      localStorage.setItem(CONVERSATIONS_STORAGE_KEY, JSON.stringify(conversations));
+    }
+  }
+
+  return message;
+}
+
+/**
+ * Mark conversation as read
+ * TODO: Replace with Supabase update
+ */
+export function markConversationRead(conversationId: string): void {
+  if (typeof window === "undefined") return;
+
+  const conversations = getConversations();
+  const conv = conversations.find(c => c.id === conversationId);
+  if (conv) {
+    conv.unread_count = 0;
+    localStorage.setItem(CONVERSATIONS_STORAGE_KEY, JSON.stringify(conversations));
+  }
+}
+
+/**
+ * Get notifications for current user
+ * TODO: Replace with Supabase query
+ */
+export function getNotifications(): Notification[] {
+  if (typeof window === "undefined") return initializeMockNotifications();
+  const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+  if (!stored) {
+    const initial = initializeMockNotifications();
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(initial));
+    return initial;
+  }
+  return JSON.parse(stored);
+}
+
+/**
+ * Get unread notification count
+ */
+export function getUnreadNotificationCount(): number {
+  const notifications = getNotifications();
+  return notifications.filter(n => !n.read).length;
+}
+
+/**
+ * Mark notification as read
+ * TODO: Replace with Supabase update
+ */
+export function markNotificationRead(notificationId: string): void {
+  if (typeof window === "undefined") return;
+
+  const notifications = getNotifications();
+  const notif = notifications.find(n => n.id === notificationId);
+  if (notif) {
+    notif.read = true;
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+  }
+}
+
+/**
+ * Mark all notifications as read
+ */
+export function markAllNotificationsRead(): void {
+  if (typeof window === "undefined") return;
+
+  const notifications = getNotifications();
+  notifications.forEach(n => n.read = true);
+  localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+}
+
+/**
+ * Add a notification (used when match occurs)
+ * TODO: Replace with Supabase insert + push notification
+ */
+export function addNotification(notification: Omit<Notification, "id" | "created_at">): Notification {
+  const newNotif: Notification = {
+    ...notification,
+    id: `notif-${Date.now()}`,
+    created_at: new Date().toISOString(),
+  };
+
+  if (typeof window !== "undefined") {
+    const notifications = getNotifications();
+    notifications.unshift(newNotif);
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+  }
+
+  return newNotif;
+}
+
+// ============================================
+// SWIPE UNDO FUNCTIONALITY (Mock)
+// ============================================
+
+const LAST_SWIPE_KEY = "someday_last_swipe";
+
+/**
+ * Get the last swipe (for undo feature)
+ */
+export function getLastSwipe(): Swipe | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem(LAST_SWIPE_KEY);
+  return stored ? JSON.parse(stored) : null;
+}
+
+/**
+ * Undo the last swipe
+ * TODO: Replace with Supabase delete
+ */
+export function undoLastSwipe(): Candidate | null {
+  if (typeof window === "undefined") return null;
+
+  const lastSwipe = getLastSwipe();
+  if (!lastSwipe) return null;
+
+  // Remove from swipes
+  const swipes = getSwipes();
+  const filtered = swipes.filter(s => s.id !== lastSwipe.id);
+  localStorage.setItem(SWIPES_STORAGE_KEY, JSON.stringify(filtered));
+
+  // Clear last swipe
+  localStorage.removeItem(LAST_SWIPE_KEY);
+
+  // Return the candidate that was swiped on
+  return MOCK_CANDIDATES.find(c => c.id === lastSwipe.target_id) || null;
 }
 

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { MatchCard } from "@/components/matches/match-card";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
+import { MatchListSkeleton } from "@/components/ui/skeleton-cards";
 import { getMatches } from "@/lib/mock-db";
 import { useAuth } from "@/hooks/use-auth";
 import { Match } from "@/lib/types";
@@ -14,7 +15,7 @@ import { FavoriteIcon } from "@/components/ui/icons";
 export default function MatchesPage() {
   const router = useRouter();
   const { isAuthenticated, hasCompletedOnboarding, isLoading } = useAuth();
-  
+
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(true);
 
@@ -40,19 +41,7 @@ export default function MatchesPage() {
   }, [isAuthenticated, hasCompletedOnboarding]);
 
   if (isLoading || isLoadingMatches) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            <FavoriteIcon size="large" className="text-rose-gold" />
-          </motion.div>
-          <p className="text-muted-foreground">Loading your matches...</p>
-        </div>
-      </div>
-    );
+    return <MatchListSkeleton count={3} />;
   }
 
   return (

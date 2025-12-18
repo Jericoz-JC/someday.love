@@ -7,6 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumberStepper } from "@/components/ui/number-stepper";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -202,17 +211,13 @@ export default function OnboardingPage() {
               </p>
             </div>
             <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="age">How old are you?</Label>
-                <Input
-                  id="age"
-                  type="number"
+              <div className="space-y-4">
+                <Label className="text-center block">How old are you?</Label>
+                <NumberStepper
+                  value={data.age || 25}
+                  onChange={(value) => updateData({ age: value })}
                   min={18}
                   max={100}
-                  placeholder="Age"
-                  value={data.age || ""}
-                  onChange={(e) => updateData({ age: parseInt(e.target.value) || 0 })}
-                  className="h-14 text-lg"
                 />
               </div>
               <div className="space-y-3">
@@ -245,20 +250,23 @@ export default function OnboardingPage() {
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label>Your location</Label>
-                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                  {LOCATIONS.map((location) => (
-                    <button
-                      key={location}
-                      onClick={() => updateData({ location })}
-                      className={`rounded-xl border-2 p-3 text-sm text-left transition-all ${data.location === location
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                        }`}
-                    >
-                      {location}
-                    </button>
-                  ))}
-                </div>
+                <Select
+                  value={data.location || ""}
+                  onValueChange={(value) => updateData({ location: value })}
+                >
+                  <SelectTrigger className="h-14 text-base">
+                    <SelectValue placeholder="Select your city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <ScrollArea className="h-64">
+                      {LOCATIONS.map((location) => (
+                        <SelectItem key={location} value={location}>
+                          {location}
+                        </SelectItem>
+                      ))}
+                    </ScrollArea>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-3">
                 <Label>I&apos;m interested in...</Label>

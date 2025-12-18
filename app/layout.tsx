@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -54,6 +55,7 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={`${outfit.variable} font-sans antialiased`}>
           {children}
+          <Toaster position="top-center" />
         </body>
       </html>
     </ClerkProvider>

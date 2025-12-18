@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   SunriseIcon, LeafIcon, SparklesIcon, DiamondIcon,
   CoupleIcon, SmallGroupIcon, PartyIcon, LargeGroupIcon,
   RusticIcon, ModernIcon, ClassicIcon, AdventureIcon,
@@ -147,4 +147,59 @@ export function getIconComponent(iconName: string) {
   };
   return iconMap[iconName] || SunriseIcon;
 }
+
+// ============================================
+// CHAT SYSTEM TYPES (Mock - migrate to Supabase later)
+// ============================================
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  type: 'text' | 'image' | 'emoji';
+  created_at: string;
+  read_at?: string;
+}
+
+export interface Conversation {
+  id: string;
+  match_id: string;
+  participant_1: string;
+  participant_2: string;
+  last_message?: string;
+  last_message_at?: string;
+  unread_count: number;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'match' | 'message' | 'like' | 'system';
+  title: string;
+  body: string;
+  read: boolean;
+  data?: Record<string, unknown>;
+  created_at: string;
+}
+
+// Filter preferences for discover
+export interface DiscoverFilters {
+  ageRange: [number, number];
+  distance: number;
+  budgetTiers: BudgetTier[];
+  venueVibes: VenueVibe[];
+  guestCounts: GuestCount[];
+  recentlyActive: boolean;
+}
+
+export const DEFAULT_FILTERS: DiscoverFilters = {
+  ageRange: [21, 45],
+  distance: 50,
+  budgetTiers: [],
+  venueVibes: [],
+  guestCounts: [],
+  recentlyActive: false,
+};
 

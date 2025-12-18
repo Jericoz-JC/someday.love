@@ -56,6 +56,52 @@ flowchart TB
 - **Explanations**: OpenRouter Llama 3.2
 - **UI**: shadcn/ui + Framer Motion
 
+## ⚠️ Temporary Measures (Pre-Supabase Migration)
+
+The following features use **mock data and localStorage** for UI development. These require refactoring before production Supabase integration:
+
+### Mock Data Systems (`lib/mock-db.ts`)
+| Feature | Current Implementation | Migration Target |
+|---------|----------------------|------------------|
+| **Candidates** | Static array of 8 mock profiles | Supabase hybrid search function |
+| **Swipes** | localStorage (`someday_mock_swipes`) | `swipes` table with RLS |
+| **Matches** | localStorage (`someday_mock_matches`) | Mutual swipe detection query |
+| **Conversations** | localStorage (`someday_mock_conversations`) | `conversations` table |
+| **Messages** | localStorage (`someday_mock_messages`) | `messages` table + Realtime |
+| **Notifications** | localStorage (`someday_mock_notifications`) | `notifications` table + Push |
+| **Last Swipe (Undo)** | localStorage (`someday_last_swipe`) | Server-side swipe reversal |
+
+### Chat System Hooks (TODO: Replace with Supabase Realtime)
+```typescript
+// lib/mock-db.ts - Functions requiring Supabase migration:
+getConversations()     // → SELECT * FROM conversations WHERE participant = $1
+getOrCreateConversation() // → INSERT ... ON CONFLICT DO NOTHING
+getMessages()          // → SELECT * FROM messages WHERE conversation_id = $1
+sendMessage()          // → INSERT INTO messages + Broadcast channel
+markConversationRead() // → UPDATE conversations SET unread_count = 0
+```
+
+### Notification System Hooks (TODO: Replace with Supabase)
+```typescript
+getNotifications()          // → SELECT * FROM notifications WHERE user_id = $1
+getUnreadNotificationCount() // → COUNT(*) WHERE read = false
+markNotificationRead()      // → UPDATE notifications SET read = true
+markAllNotificationsRead()  // → UPDATE notifications SET read = true WHERE user_id = $1
+addNotification()           // → INSERT INTO notifications
+```
+
+### Settings (Mock State Only)
+Settings page stores preferences in component state. Migration requires:
+- `user_preferences` table in Supabase
+- Sync on mount / debounced save on change
+
+### Features Deferred to Supabase Phase
+- **Photo Upload**: Requires Supabase Storage + `profile_photos` table
+- **Inline Profile Edit**: Requires profile update API endpoint
+- **Real Typing Indicators**: Requires Supabase Presence channel
+- **Read Receipts**: Requires `message_receipts` table
+
+
 ## 📊 Database Schema
 
 ### Profiles Table
@@ -397,6 +443,191 @@ After initial onboarding, collect deeper data through gamification:
 | Refine Matches | After 10 swipes | Ceremony style, first dance song |
 | Crisis Quiz | After first match | "Rain on wedding day" scenario |
 | This or That | Daily prompt | Aesthetic micro-preferences |
+
+## 💬 Chat Interface Architecture (Planned)
+
+### Overview
+
+The chat system will leverage **Supabase Realtime** for WebSocket-based messaging between matched users. The architecture uses a hybrid approach combining instant delivery with message persistence.
+
+### Supabase Realtime Capabilities
+
+| Feature | Use Case | Persistence |
+|---------|----------|-------------|
+| **Broadcast** | Low-latency message delivery | ❌ Ephemeral |
+| **Presence** | Typing indicators, online status | ❌ Ephemeral |
+| **Postgres Changes** | Database event subscriptions | ✅ Persistent |
+
+**Performance benchmarks**: 224,000 messages/second with 32,000 users at 6ms median latency.
+
+### Hybrid Architecture Pattern
+
+```javascript
+// Broadcast for instant delivery, database for persistence
+const sendMessage = async (content) => {
+  const message = {
+    id: crypto.randomUUID(),
+    sender_id: currentUserId,
+    content,
+    timestamp: new Date().toISOString()
+  }
+  
+  // Instant delivery via Broadcast
+  await channel.send({
+    type: 'broadcast',
+    event: 'new_message',
+    payload: { message }
+  })
+  
+  // Persist to database
+  await supabase.from('messages').insert(message)
+}
+```
+
+### Supabase Realtime Pricing & Quotas
+
+#### Pricing by Plan
+
+| Plan | Monthly Cost | Connections | Messages/Month | Max Message Size |
+|------|-------------|-------------|----------------|------------------|
+| **Free** | $0 | 200 | 2 Million | 250 KB |
+| **Pro** | $25 | 500 | 5 Million | 3 MB |
+| **Team** | $599 | 500 | 5 Million | 3 MB |
+| **Enterprise** | Custom | Custom | Volume discounts | Custom |
+
+**Overage pricing (Pro/Team)**: +$10 per 1,000 connections, +$2.50 per million messages
+
+#### Realtime Quotas
+
+| Feature | Free | Pro | Team/Enterprise |
+|---------|------|-----|-----------------|
+| Concurrent connections | 200 | 500 | 10,000+ |
+| Messages per second | 100 | 500 | 2,500+ |
+| Channel joins per second | 100 | 500 | 2,500+ |
+| Channels per connection | 100 | 100 | 100+ |
+| Presence keys per object | 10 | 10 | 10+ |
+| Presence messages/sec | 20 | 50 | 1,000+ |
+| Broadcast payload size | 256 KB | 3 MB | 3 MB+ |
+| Postgres change payload | 1 MB | 1 MB | 1 MB+ |
+
+> [!NOTE]
+> Free tier is sufficient for MVP and early growth (~200 concurrent users).
+> See [Supabase Pricing](https://supabase.com/pricing) for latest details.
+
+### Scaling Thresholds
+
+| User Scale | Recommended Architecture |
+|------------|-------------------------|
+| < 1,000 | Supabase Realtime alone |
+| 1,000 - 10,000 | Supabase Pro + Redis for presence caching |
+| 10,000 - 100,000 | Redis Pub/Sub + multiple WebSocket servers |
+| 100,000+ | Custom infrastructure or Enterprise tier |
+
+### Chat Database Schema (Planned)
+
+#### Conversations Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `participant_1` | uuid | FK to profiles |
+| `participant_2` | uuid | FK to profiles |
+| `status` | text | `active` \| `archived` \| `blocked` |
+| `last_message_preview` | text | Truncated last message |
+| `last_message_at` | timestamptz | For sorting |
+| `created_at` | timestamptz | Conversation start |
+
+#### Messages Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `conversation_id` | uuid | FK to conversations |
+| `sender_id` | uuid | FK to profiles |
+| `content` | text | Message content |
+| `type` | text | `text` \| `image` \| `emoji` |
+| `created_at` | timestamptz | Message timestamp |
+
+#### Message Receipts Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `message_id` | uuid | FK to messages |
+| `user_id` | uuid | FK to profiles |
+| `delivered_at` | timestamptz | Delivery timestamp |
+| `read_at` | timestamptz | Read timestamp |
+
+#### Typing Status Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `conversation_id` | uuid | FK to conversations |
+| `user_id` | uuid | FK to profiles |
+| `is_typing` | boolean | Current typing state |
+| `updated_at` | timestamptz | Last update |
+
+#### Blocked Users Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `blocker_id` | uuid | Who blocked |
+| `blocked_id` | uuid | Who was blocked |
+| `created_at` | timestamptz | Block timestamp |
+
+### Critical Indexes
+
+```sql
+-- Efficient message loading
+CREATE INDEX idx_messages_conversation_time 
+ON messages(conversation_id, created_at DESC);
+
+-- Conversation lookups by participant
+CREATE INDEX idx_conversations_participant_1 
+ON conversations(participant_1);
+CREATE INDEX idx_conversations_participant_2 
+ON conversations(participant_2);
+```
+
+### Row Level Security (RLS)
+
+```sql
+-- Users can only read messages from their conversations
+CREATE POLICY "Users can read own messages" ON messages
+FOR SELECT USING (
+  auth.uid() IN (
+    SELECT participant_1 FROM conversations WHERE id = conversation_id
+    UNION
+    SELECT participant_2 FROM conversations WHERE id = conversation_id
+  )
+);
+
+-- Users can only send messages to conversations they're in
+CREATE POLICY "Users can send own messages" ON messages
+FOR INSERT WITH CHECK (
+  sender_id = auth.uid() AND
+  auth.uid() IN (
+    SELECT participant_1 FROM conversations WHERE id = conversation_id
+    UNION
+    SELECT participant_2 FROM conversations WHERE id = conversation_id
+  )
+);
+```
+
+### Feature Roadmap
+
+| Feature | Priority | Complexity |
+|---------|----------|------------|
+| Basic text messaging | P0 | Medium |
+| Typing indicators | P1 | Low |
+| Read receipts | P1 | Low |
+| Online status | P1 | Low |
+| Image sharing | P2 | Medium |
+| Emoji reactions | P2 | Low |
+| Message deletion | P2 | Medium |
+| Block/report | P0 | Medium |
+
+---
 
 ## 🧪 Research Foundation
 

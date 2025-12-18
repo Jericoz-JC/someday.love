@@ -3,6 +3,7 @@
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Candidate, VENUE_VIBES, BUDGET_TIERS, GUEST_COUNTS, getIconComponent } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,7 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
-  
+
   // Like/Nope indicators
   const likeOpacity = useTransform(x, [0, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0]);
@@ -73,7 +74,7 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
         {/* Profile Image Placeholder */}
         <div className="relative h-72 bg-gradient-to-br from-primary/30 to-primary/10">
           <div className="absolute inset-0 flex items-center justify-center">
-            {venueInfo?.icon ? 
+            {venueInfo?.icon ?
               <DynamicIcon iconName={venueInfo.icon} size="xl" className="text-primary" />
               : <span className="text-8xl">💜</span>
             }
@@ -107,18 +108,39 @@ export function SwipeCard({ candidate, onSwipe, isTop = false }: SwipeCardProps)
           <div className="space-y-3">
             <h3 className="font-semibold text-muted-foreground">Wedding Vision</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {venueInfo?.icon && <DynamicIcon iconName={venueInfo.icon} size="small" className="text-primary" />}
-                {venueInfo?.label}
-              </Badge>
-              <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {budgetInfo?.icon && <DynamicIcon iconName={budgetInfo.icon} size="small" className="text-primary" />}
-                {budgetInfo?.label}
-              </Badge>
-              <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm">
-                {guestInfo?.icon && <DynamicIcon iconName={guestInfo.icon} size="small" className="text-primary" />}
-                {guestInfo?.range}
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm cursor-help">
+                    {venueInfo?.icon && <DynamicIcon iconName={venueInfo.icon} size="small" className="text-primary" />}
+                    {venueInfo?.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{venueInfo?.personality}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm cursor-help">
+                    {budgetInfo?.icon && <DynamicIcon iconName={budgetInfo.icon} size="small" className="text-primary" />}
+                    {budgetInfo?.label}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{budgetInfo?.tagline}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="gap-1 px-3 py-1.5 text-sm cursor-help">
+                    {guestInfo?.icon && <DynamicIcon iconName={guestInfo.icon} size="small" className="text-primary" />}
+                    {guestInfo?.range}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{guestInfo?.description}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 

@@ -5,23 +5,28 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SwipeCard } from "@/components/discover/swipe-card";
 import { SwipeButtons } from "@/components/discover/swipe-buttons";
+import { FilterSheet } from "@/components/discover/filter-sheet";
 import { MatchNotification } from "@/components/matches/match-notification";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
-import { getCandidates, recordSwipe } from "@/lib/mock-db";
+import { SwipeCardSkeleton } from "@/components/ui/skeleton-cards";
+import { toast } from "@/components/ui/sonner";
+import { getCandidates, recordSwipe, getLastSwipe, undoLastSwipe } from "@/lib/mock-db";
 import { useAuth } from "@/hooks/use-auth";
-import { Candidate } from "@/lib/types";
+import { Candidate, DiscoverFilters, DEFAULT_FILTERS } from "@/lib/types";
 import { CelebrationIcon } from "@/components/ui/icons";
 
 export default function DiscoverPage() {
   const router = useRouter();
   const { isAuthenticated, hasCompletedOnboarding, user, isLoading } = useAuth();
-  
+
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(true);
   const [showMatch, setShowMatch] = useState(false);
   const [matchedName, setMatchedName] = useState("");
+  const [canUndo, setCanUndo] = useState(false);
+  const [filters, setFilters] = useState<DiscoverFilters>(DEFAULT_FILTERS);
 
   // Redirect if not authenticated or onboarding incomplete
   useEffect(() => {
@@ -34,7 +39,7 @@ export default function DiscoverPage() {
   useEffect(() => {
     async function loadCandidates() {
       if (!user?.id) return;
-      
+
       setIsLoadingCandidates(true);
       const data = await getCandidates(user.id);
       setCandidates(data);
@@ -45,6 +50,12 @@ export default function DiscoverPage() {
       loadCandidates();
     }
   }, [isAuthenticated, hasCompletedOnboarding, user?.id]);
+
+  // Check if undo is available
+  useEffect(() => {
+    const lastSwipe = getLastSwipe();
+    setCanUndo(!!lastSwipe);
+  }, [currentIndex]);
 
   const handleSwipe = useCallback(async (direction: "left" | "right") => {
     const candidate = candidates[currentIndex];
@@ -61,6 +72,11 @@ export default function DiscoverPage() {
     if (result.isMatch) {
       setMatchedName(candidate.name);
       setShowMatch(true);
+      toast.success(`It's a match! 💜`, {
+        description: `You and ${candidate.name} both liked each other!`,
+      });
+    } else if (liked) {
+      toast("Liked!", { icon: "❤️", duration: 1500 });
     }
 
     setCurrentIndex((prev) => prev + 1);
@@ -69,25 +85,53 @@ export default function DiscoverPage() {
   const handlePass = () => handleSwipe("left");
   const handleLike = () => handleSwipe("right");
 
+  const handleUndo = useCallback(() => {
+    const undoneCandidate = undoLastSwipe();
+    if (undoneCandidate && currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+      toast("Undo", { icon: "↩️", description: "Previous swipe undone", duration: 1500 });
+      setCanUndo(false);
+    }
+  }, [currentIndex]);
+
+  const handleSuperLike = useCallback(async () => {
+    const candidate = candidates[currentIndex];
+    if (!candidate || !user?.id) return;
+
+    // Super like is like a regular like but with extra notification
+    const result = await recordSwipe(
+      user.id,
+      candidate.id,
+      true,
+      candidate.similarity * 100
+    );
+
+    toast.success("Super Liked!", {
+      icon: "⭐",
+      description: `${candidate.name} will be notified!`,
+      duration: 2000
+    });
+
+    if (result.isMatch) {
+      setMatchedName(candidate.name);
+      setShowMatch(true);
+    }
+
+    setCurrentIndex((prev) => prev + 1);
+  }, [candidates, currentIndex, user?.id]);
+
+  const handleFiltersChange = (newFilters: DiscoverFilters) => {
+    setFilters(newFilters);
+    // In production, would refetch candidates with filters
+    toast("Filters applied", { icon: "✓", duration: 1500 });
+  };
+
   const currentCandidate = candidates[currentIndex];
   const nextCandidate = candidates[currentIndex + 1];
   const hasMoreCandidates = currentIndex < candidates.length;
 
   if (isLoading || isLoadingCandidates) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="text-5xl"
-          >
-            💜
-          </motion.div>
-          <p className="text-muted-foreground">Finding your matches...</p>
-        </div>
-      </div>
-    );
+    return <SwipeCardSkeleton />;
   }
 
   return (
@@ -100,9 +144,27 @@ export default function DiscoverPage() {
               SomeDay
             </span>
           </h1>
-          <span className="text-sm text-muted-foreground">
-            {candidates.length - currentIndex} profiles left
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {candidates.length - currentIndex} left
+            </span>
+            <FilterSheet filters={filters} onFiltersChange={handleFiltersChange}>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+              </Button>
+            </FilterSheet>
+          </div>
         </div>
       </header>
 
@@ -111,7 +173,7 @@ export default function DiscoverPage() {
         {hasMoreCandidates ? (
           <>
             {/* Card stack */}
-            <div className="relative h-[480px] w-full max-w-sm">
+            <div className="relative h-[480px] w-full max-w-sm z-10">
               <AnimatePresence>
                 {/* Next card (background) */}
                 {nextCandidate && (
@@ -123,7 +185,7 @@ export default function DiscoverPage() {
                   >
                     <SwipeCard
                       candidate={nextCandidate}
-                      onSwipe={() => {}}
+                      onSwipe={() => { }}
                       isTop={false}
                     />
                   </motion.div>
@@ -142,11 +204,14 @@ export default function DiscoverPage() {
             </div>
 
             {/* Swipe buttons */}
-            <div className="mt-6">
+            <div className="mt-6 relative z-0">
               <SwipeButtons
                 onPass={handlePass}
                 onLike={handleLike}
+                onUndo={handleUndo}
+                onSuperLike={handleSuperLike}
                 disabled={!currentCandidate}
+                canUndo={canUndo}
               />
             </div>
 
@@ -191,3 +256,4 @@ export default function DiscoverPage() {
     </div>
   );
 }
+
